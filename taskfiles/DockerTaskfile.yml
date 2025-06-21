@@ -62,10 +62,16 @@ tasks:
       RUN_NAME: '{{.RUN_NAME | default "camera-photo"}}'
       RUN_MODE: '{{.RUN_MODE | default "extract"}}'
       MAX: '{{.MAX | default ""}}'
+      DESTINATION: '{{.DESTINATION | default ""}}'
     preconditions:
       - sh: |
           if [ "{{.RUN_MODE}}" = "extract" ] && [ -z "{{.MAX}}" ]; then
             echo "Error: --max must be set when RUN_MODE is 'extract'"
+            exit 1
+          fi
+
+          if [ "{{.RUN_MODE}}" = "load" ] && [ -z "{{.DESTINATION}}" ]; then
+            echo "Error: --destin must be set when RUN_MODE is 'load'"
             exit 1
           fi
     cmds:
@@ -73,5 +79,7 @@ tasks:
         docker run --rm -v "${PWD}/data:/app/data" {{.TAG}} \
           --run_group "{{.RUN_GROUP}}" \
           --run_name "{{.RUN_NAME}}" \
-          --run_mode "{{.RUN_MODE}}"{{if eq .RUN_MODE "extract"}} \
-          --max "{{.MAX}}"{{end}}
+          --run_mode "{{.RUN_MODE}}" {{if eq .RUN_MODE "extract"}} \
+          --max "{{.MAX}}"{{end}} \
+          {{if eq .RUN_MODE "load"}} \
+          --destin "{{.DESTINATION}}"{{end}}

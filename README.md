@@ -1,134 +1,230 @@
-# 🕷️ Amazon Web Scraping Pipeline with Docker & CI/CD
+## 🕷️ Amazon Web Scraping Pipeline with Docker & CI/CD
 
-## 🚀 Overview
-The project extends the Amazon Web Scraper CLI by automating the ETL process using Docker.
-This project scrapes Amazon product data using Playwright and loads it into a PostgreSQL database.  
-The ETL pipeline is containerized with Docker and can be run either standalone or with Docker Compose for multi-container orchestration.  
-Using Docker volumes, scraped data stored in PostgreSQL will persist even after container shutdown.
+### 🚀 Overview
+
+This project enhances the original [Amazon Web Scraper CLI](https://github.com/codewithbab015/amazon-scraper-dockerized) by introducing a fully automated ETL (Extract, Transform, Load) pipeline using Docker. It scrapes Amazon product data with **Playwright**, processes it, and loads it into a **PostgreSQL** database.
+
+The pipeline is containerized for portability and can be run either as a standalone container or orchestrated using **Docker Compose** for multi-container execution. Scraped data stored in PostgreSQL is preserved across sessions using **Docker volumes**.
+
+#### 🧱 ETL Pipeline Architecture
+```mermaid
+flowchart LR
+    %% Docker Compose Network
+    subgraph COMPOSE[🧩<b>Docker Compose Network  </b>]
+
+        %% ETL Container
+        subgraph A[🐳 <b>ETL Container</b><br/><i>amazon-etl</i>]
+            R[🚀 <b>run_script.py</b><br/><i>Entrypoint</i>]
+            R --> E1[📥 <b>Extract</b><br/><i>Data Ingestion</i>]
+            R --> E2[⚙️ <b>Transform</b><br/><i>Data Cleaning</i>]
+            R --> E3[📤 <b>Load</b><br/><i>To DB or Dir</i>]
+        end
+        %% Database Container
+        subgraph B[🐘 <b>PostgreSQL</b><br/><i>Database Service</i>]
+            DB[(🗄️ <b>postgres-db</b>)]
+        end
+
+        %% Volume
+        subgraph V[🗂️ <b>Volume</b><br/><i>Shared File Storage</i>]
+            VOL[(📦 <b>Mounted Volume</b>)]
+        end
+
+        %% Data Flow
+        E1 --> JSON[📄 <b>Raw JSON</b>]
+        E2 --> CLEAN[✨ <b>Clean Dataset</b>]
+        E3 --> DB
+        E3 --> VOL
+    end
+
+    %% Styling
+    classDef container fill:#ede7f6,stroke:#7b1fa2,stroke-width:2px,color:#4a148c,font-weight:bold
+    classDef db fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#0d47a1
+    classDef volume fill:#f1f8e9,stroke:#33691e,stroke-width:2px,color:#1b5e20
+    classDef process fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#e65100
+    classDef output fill:#fce4ec,stroke:#ad1457,stroke-width:2px,color:#880e4f
+
+    class A,R,E1,E2,E3 container
+    class B,DB db
+    class V,VOL volume
+    class JSON,CLEAN,DB,VOL output
+```
+---
+
+### 🛠️ Project Guidelines
+
+This pipeline builds upon the [Amazon Web Scraper CLI](https://github.com/codewithbab015/amazon-scraper-dockerized) by dockerizing all ETL stages. The pipeline is executed using the `run_script.py` entrypoint, which supports running each stage independently.
+
+Each stage accepts specific arguments, as outlined below:
+
+
+#### ✅ Stage 1: Extract
+
+Scrapes product listing data from Amazon.
+
+**Required arguments:**
+
+- `RUN_GROUP`: Main product category (refer to `configs.yml`)
+- `RUN_NAME`: Subcategory associated with the `RUN_GROUP`
+- `RUN_MODE`: Must be set to `extract`
+- `MAX`: Number of pages to scrape (must be ≥ 1)
+
+
+#### 🔄 Stage 2: Transform
+
+Processes and enriches the extracted data.
+
+**Required arguments:**
+
+- `RUN_GROUP`: Main product category
+- `RUN_NAME`: Product subcategory
+- `RUN_MODE`: Must be set to `transform`
+
+
+#### 📦 Stage 3: Load
+
+Cleans and stores data either locally or in a PostgreSQL database.
+
+**Required arguments:**
+
+- `RUN_GROUP`: Main product category
+- `RUN_NAME`: Product subcategory
+- `RUN_MODE`: Must be set to `load`
+- `DESTINATION`: Indicates the storage destination:
+  - `dir`: Save data locally to the project directory
+  - `db`: Load data into the PostgreSQL database
+
+The pipeline automatically handles the chosen destination (`dir` or `db`) based on this configuration.
+
+
+#### 🧾 Script Summary
+
+| Stage | Script                           | Description                                                    |
+|-------|----------------------------------|----------------------------------------------------------------|
+| 1     | `extract/scraper_extractor.py`   | Scrapes summary-level product data and saves it as JSON        |
+| 2     | `transform/scraper_transform.py` | Transforms and enriches the data based on Step 1 output        |
+| 3     | `load/scraper_load.py`           | Cleans and loads the data into a local directory or PostgreSQL |
 
 ---
 
-## ⚙️ Prerequisites
+### 🐳 Docker Execution Commands for the Project
 
-- [Docker](https://www.docker.com/) installed
-- [Docker Compose](https://docs.docker.com/compose/install/) installed
-- (Optional for dev) Python 3.8+ and virtual environment for manual debugging
+This project is executed using a [`Taskfile`](https://taskfile.dev) as defined in the project structure. The `Taskfile` provides a clean and rich CLI interface, allowing you to unify dependent Docker and command-line instructions into a single, maintainable file.
 
----
+#### ⚙️ Prerequisites
 
-## ▶️ Option 1: Run Docker Standalone
+Before running the project, ensure the following tools are installed:
 
-> Use this for single-stage execution (e.g., just extract or transform).
+- 🐳 [Docker](https://www.docker.com/)
+- 📦 [Docker Compose](https://docs.docker.com/compose/install/)
+- 🐍 (Optional for development) Python 3.8+ with a virtual environment for manual debugging
 
-### 1. Login to Docker Hub
 
-```bash
-# Log in to Docker Hub
-task docker:docker-login
-````
-
-### 2. Build Docker Image Locally
-
-```bash
-task docker:local-build \
-  DOCKER_USER=<enter username> \
-  IMAGE_NAME=amazon-scraper-cli \
-  VERSION=latest \
-  RUN_GROUP=electronics \
-  RUN_TYPE=camera-photo \
-  RUN_MODE=extract \
-  MAX=1
-```
-
-### 3. Push Image to Docker Hub (Optional)
-
-```bash
-task docker:local-remote \
-  DOCKER_USER=<enter username> \
-  IMAGE_NAME=amazon-scraper-cli \
-  VERSION=latest
-```
-
-### 4. Build and Push Image to Docker Hub (Optional)
-```bash
-task docker:remote-build \
-  DOCKER_USER=<enter username> \
-  IMAGE_NAME=amazon-scraper-cli \
-  VERSION=latest
-```
-
----
-
-## ▶️ Option 2: Run with Docker Compose (with Data Persistence)
-
-> Recommended for running the full pipeline and keeping data between runs.
-
-### 1. Clone the Repository
+#### 📁 Clone the Repository
 
 ```bash
 git clone https://github.com/your-username/amazon-scraper-dockerized.git
 cd amazon-scraper-dockerized
 ```
 
-### 2. Run with Docker Compose
+#### ▶️ Option 1: Run Docker Standalone
+
+> Recommended for executing a single-stage task (e.g., `extract`, `transform`, or `load`).
+
+##### 🔐 1. Login to Docker Hub
 
 ```bash
-docker-compose up --build
+# Log in to Docker Hub
+task docker:docker-login
 ```
 
-This will:
-
-* Spin up the scraper container and PostgreSQL database
-* Create a named volume (e.g., `pgdata`) to persist PostgreSQL data locally
-
-### 3. Stop and Keep Data
+##### 🏗️ 2. Build Docker Image Locally
 
 ```bash
-docker-compose down
+# Build Docker Image and Load to Daemon
+task docker:local-build \
+  DOCKER_USER=<your-dockerhub-username> \
+  IMAGE_NAME=amazon-scraper-cli \
+  VERSION=latest
+
+# List all Docker images on your system
+docker images
+
+# View currently running Docker containers
+docker ps
+
+# View all containers (including stopped ones)
+docker ps -a
+
+# Remove all unused Docker images (dangling and untagged)
+docker image prune -a
+
+# Remove all unused Docker volumes
+docker volume prune
+
+# Remove all stopped containers
+docker container prune
+
+# Remove a specific container by name or ID
+docker rm <container_id_or_name>
+
+# View logs from a specific running container
+docker logs <container_id_or_name>
+
+# Stop a specific running container
+docker stop <container_id_or_name>
+
 ```
 
-> ⚠️ This will **stop containers but keep the database volume**.
-
-### 4. Stop and Remove Everything (Including Data)
+##### 📤 3. Push Image to Docker Hub (Optional)
 
 ```bash
-docker-compose down -v
+task docker:local-remote \
+  DOCKER_USER=<enter your Docker Hub username> \
+  IMAGE_NAME=amazon-scraper-cli \
+  VERSION=latest
 ```
 
-> ⚠️ Use `-v` only if you want to delete all volumes and start fresh.
-
----
-
-## 🧭 ETL Pipeline Overview
-
-| Stage     | Script                           | Description                                          |
-| --------- | -------------------------------- | ---------------------------------------------------- |
-| Extract   | `extract/scraper_extractor.py`   | Scrapes summary-level product data and saves as JSON |
-| Transform | `transform/scraper_transform.py` | Extracts detailed data based on Step 1 output        |
-| Load      | `load/scraper_load.py`           | Cleans and loads the data into PostgreSQL            |
-
----
-
-## 🛠️ (Optional) Local Python Development
-
-> For debugging or extending functionality outside of Docker.
-
-### Create & Activate Virtual Environment
+##### 🔁 4. Build and Push Image to Docker Hub (Optional)
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
+task docker:remote-build \
+  DOCKER_USER=<enter your Docker Hub username> \
+  IMAGE_NAME=amazon-scraper-cli \
+  VERSION=latest
 ```
-
-### Install Dependencies
-
-```bash
-pip install --upgrade pip
-pip install -r requirements.txt
-```
-
-### Install Playwright Browser
+##### 🚀 5. Run Docker Container: Store Data Locally
 
 ```bash
-playwright install firefox
+# DOCKER_USER, IMAGE_NAME, and VERSION can be set as defaults in ./taskfiles/Dockerfile.yml
+# Change RUN_GROUP, RUN_TYPE, and RUN_MODE as required
+
+# Step 1: Extract data and store it as JSON locally
+task docker:run-job \
+  DOCKER_USER=<your-dockerhub-username> \
+  IMAGE_NAME=amazon-scraper-cli \
+  VERSION=latest \
+  RUN_GROUP=electronics \
+  RUN_TYPE=camera-photo \
+  RUN_MODE=extract \
+  MAX=1
+
+# Step 2: Transform the extracted data and store it as JSON locally
+task docker:run-job \
+  DOCKER_USER=<your-dockerhub-username> \
+  IMAGE_NAME=amazon-scraper-cli \
+  VERSION=latest \
+  RUN_GROUP=electronics \
+  RUN_TYPE=camera-photo \
+  RUN_MODE=transform
+
+# Step 3: Load the transformed data into the local file system
+# Use DESTINATION=db if loading into a database (via Docker Compose or Kubernetes)
+task docker:run-job \
+  DOCKER_USER=<your-dockerhub-username> \
+  IMAGE_NAME=amazon-scraper-cli \
+  VERSION=latest \
+  RUN_GROUP=electronics \
+  RUN_TYPE=camera-photo \
+  RUN_MODE=load \
+  DESTINATION=dir
 ```
