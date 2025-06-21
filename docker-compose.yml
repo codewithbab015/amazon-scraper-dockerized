@@ -30,6 +30,8 @@ services:
       - "5050:80"
     depends_on:
       - postgres
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
     networks:
       - pg-network
 
@@ -52,6 +54,7 @@ services:
 
 volumes:
   postgres_data:
+  pgadmin_data:
 
 networks:
   pg-network:
