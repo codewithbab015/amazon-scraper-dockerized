@@ -25,6 +25,7 @@ def build_args(
     config: dict,
     category_name: str,
     max_number: str,
+    destination: str,
 ) -> list:
     args = ["python3", str(run_script), "--path", str(folder_path)]
     match run_mode:
@@ -58,6 +59,8 @@ def build_args(
                 str(output_file),
                 "--transform",
                 str(folder_path / transform_file),
+                "--destin",
+                str(destination),
             ]
         case "upload":
             args += []
@@ -72,6 +75,10 @@ def parse_arguments():
     parser.add_argument("--run_name", help="Subcategory under run_group.")
     parser.add_argument(
         "--run_mode", help="Stage to run (extract, transform, clean, load)."
+    )
+    parser.add_argument(
+        "--destin",
+        help="Directs the destination of the final processed and cleaned data.",
     )
     parser.add_argument("--max", type=int, default=1, help="Maximum page number limit")
     return parser.parse_args()
@@ -125,6 +132,7 @@ def run_main():
         category_group,
         category_name,
         max_page_num,
+        args.destin,
     )
 
     print(f"Running script with args: {command_args}")

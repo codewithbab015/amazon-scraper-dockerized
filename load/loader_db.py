@@ -10,9 +10,7 @@ import pandas as pd
 import psycopg2
 
 
-# ----------------------------------------
-# Dataclass Definition
-# ----------------------------------------
+# Dataclass Definitio
 @dataclass
 class DataFields:
     name: str
@@ -113,29 +111,14 @@ class DataLoader(DataFields):
         print(f"Inserted {len(data)} record(s) into '{table_name}' table.")
 
 
-if __name__ == "__main__":
-
-    # ----------------------------------------
+def run_loader_db(args_parser: ArgumentParser) -> None:
     # Load runtime args/parameters
-    # ----------------------------------------
-    parser = ArgumentParser()
-    parser.add_argument("--path", help="File path where the data in CSV is stored.")
-    # parser.add_argument("--clean", help="File name from previous run")
-    args = parser.parse_args()
-
-    # ----------------------------------------
-    # Load DB Config from settings.ini
-    # ----------------------------------------
-    # parser_args = ConfigParser()
-    # parser_args.read("settings.ini")
-
     DB_HOST = os.getenv("DB_HOST")
     DB_NAME = os.getenv("DB_NAME")
     DB_USER = os.getenv("DB_USER")
     DB_PASSWORD = os.getenv("DB_PASSWORD")
     DB_PORT = os.getenv("DB_PORT")
 
-    # pg_config = parser_args["POSTGRES_DB"]
     connector = psycopg2.connect(
         host=DB_HOST,
         port=DB_PORT,
@@ -143,21 +126,10 @@ if __name__ == "__main__":
         user=DB_USER,
         password=DB_PASSWORD,
     )
-    # pg_config = parser_args["POSTGRES_DB"]
-    # connector = psycopg2.connect(
-    #     host=pg_config["HOST"],
-    #     port=pg_config["PORT"],
-    #     dbname=pg_config["DATABASE"],
-    #     user=pg_config["USER"],
-    #     password=pg_config["PASSWORD"],
-    # )
 
-    # ----------------------------------------
     # Load CSV & Insert Data
-    # ----------------------------------------
     # Extract and sort timestamps from CSV filenames
-    # run_name =
-    path = Path(args.path)
+    path = Path(args_parser.path)
     timestamps = sorted(
         [
             "_".join(re.findall(r"\d+", f.name))
@@ -166,7 +138,6 @@ if __name__ == "__main__":
         ],
         reverse=True,
     )
-    # print(path)
     # Get latest file based on timestamp
     latest_file = next(f for f in path.glob("*.csv") if timestamps[0] in f.name)
     # print(latest_file)
@@ -175,7 +146,7 @@ if __name__ == "__main__":
     processed_data = [DataLoader.from_series(row) for _, row in df.iterrows()]
     extract_run_name = path.as_posix().rsplit("/", maxsplit=1)[-1]
     schema_table = "_".join(extract_run_name.split("-"))
-    # print(schema_table)
+
     with connector.cursor() as cursor:
         DataLoader.create_table_and_insert(
             schema_table, connector, cursor, processed_data
