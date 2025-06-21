@@ -258,3 +258,14 @@ docker run \
   --destin "dir"
 
 ```
+#### 📁 Expected Folder Structure
+
+> Generated after running all ETL stages using the pulled Docker image.
+
+📦 data  
+└── 📁 electronics  
+    └── 📁 camera-photo  
+        ├── extract_electronics_camera_photo_data.json  
+        ├── loaded_amazoncoza_electronics_camera_photo_20250621_141903.csv  
+        └── transform_electronics_camera_photo_data.json
+
