@@ -240,6 +240,21 @@ Use the following command to pull the Docker image from the registry. This image
 > All procedures can also be automated and demonstrated using a CI/CD tool such as Jenkins.
 
 ```bash
+# Pull the latest version of the deployed image
 docker pull mrbaloyin/amazon-web-scraper-cli:latest
+
+# Run the container with extracted data saved locally
+# This executes stage 1 of 3: extract → transform → load
+# Change RUN_MODE to 'transform' or 'load' as needed.
+# Note: 'load' requires that 'transform' has already been executed.
+
+docker run \
+  --rm -v "${PWD}/data:/app/data" \
+  mrbaloyin/amazon-web-scraper-cli:latest \
+  --run_group "electronics" \
+  --run_name "camera-photo" \
+  --run_mode "extract" \
+  --max "1" \
+  --destin "dir"
 
 ```
