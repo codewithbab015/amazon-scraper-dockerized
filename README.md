@@ -146,6 +146,7 @@ task docker:local-build \
   IMAGE_NAME=amazon-scraper-cli \
   VERSION=latest
 
+# <Optional Commands>
 # List all Docker images on your system
 docker images
 
@@ -227,4 +228,18 @@ task docker:run-job \
   RUN_TYPE=camera-photo \
   RUN_MODE=load \
   DESTINATION=dir
+```
+
+#### 🐳 Pulling the Deployed Docker Image
+
+Use the following command to pull the Docker image from the registry. This image can be used for:
+
+- Local testing using Docker or Docker Compose
+- Deployment as a microservice in a Kubernetes environment
+
+> All procedures can also be automated and demonstrated using a CI/CD tool such as Jenkins.
+
+```bash
+docker pull mrbaloyin/amazon-web-scraper-cli:latest
+
 ```
