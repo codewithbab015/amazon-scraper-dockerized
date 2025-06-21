@@ -1,0 +1,12 @@
+---
+version: '3'
+
+includes:
+  cli-runner: ./taskfiles/RunCLI.yml
+  docker: ./taskfiles/DockerTaskfile.yml
+
+tasks:
+  default:
+    cmds:
+      - task --list
+    silent: true

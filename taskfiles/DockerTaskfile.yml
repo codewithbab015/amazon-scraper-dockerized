@@ -1,0 +1,65 @@
+---
+version: '3'
+
+includes:
+  common: 
+    taskfile: ./CommonVars.yml
+    internal: true
+
+vars:
+  DOCKER_USER: mrbaloyin
+  VERSION: '{{.VERSION | default "latest"}}'
+  IMAGE_NAME: '{{.IMAGE_NAME | default "amazon-scraper-cli"}}'
+  TAG: '{{.DOCKER_USER}}/{{.IMAGE_NAME}}:{{.VERSION}}'
+
+tasks:
+  docker-login:
+    desc: Log in to Docker Hub
+    cmds:
+      - docker login
+
+  local-build:
+    desc:  Build Docker image locally and load into Docker daemon
+    deps:
+      - docker-login
+    cmds:
+      - docker buildx build --load -t {{.TAG}} .
+
+  remote-build:
+    desc: Build and push Docker image to Docker Hub
+    deps:
+      - docker-login
+    cmds:
+      - docker buildx build --push -t {{.TAG}} .
+
+  local-remote:
+    desc: Push a locally built Docker image to Docker Hub
+    cmds:
+      - docker push {{.TAG}}
+    preconditions:
+      - sh: |
+          if ! docker image inspect {{.TAG}} > /dev/null 2>&1; then
+            echo "Docker image {{.TAG}} not found locally. Run 'task local-build' first."
+            exit 1
+  compose-run:
+    vars:
+      COMPOSE_TAG: '{{.COMPOSE_TAG | default "amazon-scraper-cli"}}'
+    cmds:
+      - docker compose up --remove-orphans --no-start
+      - | 
+        docker compose run
+        --rm {{.COMPOSE_TAG}}
+        --run_group "{{.common.RUN_GROUP}}"
+        --run_name "{{.common.RUN_NAME}}" --run_mode {{if eq .common.RUN_MODE "extract"}}
+        --max {{.common.MAX}}{{end}}
+
+  run-job:
+    desc: Run ETL using Docker container
+    deps: [common:run-vars]
+    cmds:
+      - | 
+      docker run --rm -v "${PWD}/data:/app/data" 
+        {{.TAG}} --run_group {{.common.RUN_GROUP}}
+        --run_name {{.common.RUN_NAME}}
+        --run_mode {{.common.RUN_MODE}} {{if eq .common.RUN_MODE "extract"}}
+        --max {{.common.MAX}}{{end}}

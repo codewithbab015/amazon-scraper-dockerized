@@ -1,0 +1,13 @@
+__pycache__
+.venv/
+.env
+*.xlsx
+*.csv
+*.json
+*.pdf
+*.ini
+.google-cookie
+.docx
+
+docs/
+site/
