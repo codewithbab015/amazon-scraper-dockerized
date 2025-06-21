@@ -9,4 +9,5 @@ beautifulsoup4
 go-task-bin
 psycopg2-binary
 yamllint
+pre-commit
 # nltk
