@@ -39,7 +39,6 @@ def mainpage_product_details(html: str) -> dict:
         if price_tag:
             price_text = price_tag.get_text(strip=True)
             currency, price = normalize_price(price_text)
-            print("PRICE TEXT: ", price)
         else:
             currency, price = None, None
     except Exception:

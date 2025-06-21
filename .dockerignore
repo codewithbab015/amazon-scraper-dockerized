@@ -36,6 +36,7 @@ README.md
 
 # Local data and unused modules
 data/
+app/
 data-modeler/
 ground-coffee/
 pet-dry-food/
@@ -49,5 +50,5 @@ data_processor.py
 *.svg
 site/
 docs/
-trackfiles/
-Taskfile.yaml
+
+data_v1/

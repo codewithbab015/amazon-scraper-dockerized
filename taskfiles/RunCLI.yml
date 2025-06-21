@@ -1,18 +1,19 @@
 ---
 version: '3'
 
-includes:
-  common: 
-    taskfile: ./CommonVars.yml
-    internal: true
 tasks:
   run:
     desc: Run ETL locally and save cleaned data to the local data folder
-    deps: [common:run-vars]
+    vars:
+      RUN_GROUP: '{{.RUN_GROUP | default "electronics"}}'
+      RUN_NAME: '{{.RUN_NAME | default "camera-photo"}}'
+      RUN_MODE: '{{.RUN_MODE | default "extract"}}'
+      MAX: '{{.MAX | default ""}}'
+    preconditions:
+      - sh: |
+          if [ "{{.RUN_MODE}}" = "extract" ] && [ -z "{{.MAX}}" ]; then
+            echo "Error: --max must be set when RUN_MODE is 'extract'"
+            exit 1
+          fi
     cmds:
-      - |
-        python run_script.py 
-        --run_group {{.common.RUN_GROUP}} 
-        --run_name {{.common.RUN_TYPE}}
-        --run_mode {{.common.RUN_MODE}} {{if eq .common.RUN_MODE "extract"}}
-        --max {{.common.MAX}}{{end}}
+      - python run_script.py --run_group {{.RUN_GROUP}} --run_name {{.RUN_NAME}} --run_mode {{.RUN_MODE}} {{if eq .RUN_MODE "extract"}}--max {{.MAX}}{{end}}

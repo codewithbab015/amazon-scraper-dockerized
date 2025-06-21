@@ -244,7 +244,7 @@ def run_transformer():
         browser = p.firefox.launch(headless=True)
         page = browser.new_page()
 
-        for idx, product in enumerate(products_, 1):
+        for idx, product in enumerate(products_[:4], 1):
             try:
                 details = extract_product_details(page, product, category, subcategory)
                 detailed_products.append(details)

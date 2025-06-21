@@ -1,8 +1,7 @@
----
 version: '3'
 
 includes:
-  common: 
+  common:
     taskfile: ./CommonVars.yml
     internal: true
 
@@ -19,7 +18,7 @@ tasks:
       - docker login
 
   local-build:
-    desc:  Build Docker image locally and load into Docker daemon
+    desc: Build Docker image locally and load into Docker daemon
     deps:
       - docker-login
     cmds:
@@ -41,25 +40,38 @@ tasks:
           if ! docker image inspect {{.TAG}} > /dev/null 2>&1; then
             echo "Docker image {{.TAG}} not found locally. Run 'task local-build' first."
             exit 1
+          fi
+
   compose-run:
+    desc: Run the scraper using Docker Compose
     vars:
       COMPOSE_TAG: '{{.COMPOSE_TAG | default "amazon-scraper-cli"}}'
     cmds:
       - docker compose up --remove-orphans --no-start
-      - | 
-        docker compose run
-        --rm {{.COMPOSE_TAG}}
-        --run_group "{{.common.RUN_GROUP}}"
-        --run_name "{{.common.RUN_NAME}}" --run_mode {{if eq .common.RUN_MODE "extract"}}
-        --max {{.common.MAX}}{{end}}
+      - |
+        docker compose run --rm {{.COMPOSE_TAG}} \
+          --run_group "{{.common.RUN_GROUP}}" \
+          --run_name "{{.common.RUN_NAME}}" \
+          --run_mode "{{.common.RUN_MODE}}"{{if eq .common.RUN_MODE "extract"}} \
+          --max "{{.common.MAX}}"{{end}}
 
   run-job:
     desc: Run ETL using Docker container
-    deps: [common:run-vars]
+    vars:
+      RUN_GROUP: '{{.RUN_GROUP | default "electronics"}}'
+      RUN_NAME: '{{.RUN_NAME | default "camera-photo"}}'
+      RUN_MODE: '{{.RUN_MODE | default "extract"}}'
+      MAX: '{{.MAX | default ""}}'
+    preconditions:
+      - sh: |
+          if [ "{{.RUN_MODE}}" = "extract" ] && [ -z "{{.MAX}}" ]; then
+            echo "Error: --max must be set when RUN_MODE is 'extract'"
+            exit 1
+          fi
     cmds:
-      - | 
-      docker run --rm -v "${PWD}/data:/app/data" 
-        {{.TAG}} --run_group {{.common.RUN_GROUP}}
-        --run_name {{.common.RUN_NAME}}
-        --run_mode {{.common.RUN_MODE}} {{if eq .common.RUN_MODE "extract"}}
-        --max {{.common.MAX}}{{end}}
+      - |
+        docker run --rm -v "${PWD}/data:/app/data" {{.TAG}} \
+          --run_group "{{.RUN_GROUP}}" \
+          --run_name "{{.RUN_NAME}}" \
+          --run_mode "{{.RUN_MODE}}"{{if eq .RUN_MODE "extract"}} \
+          --max "{{.MAX}}"{{end}}

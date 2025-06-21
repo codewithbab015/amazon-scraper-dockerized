@@ -21,7 +21,7 @@ def build_args(
     run_mode: str,
     folder_path: Path,
     run_script: Path,
-    output_file: Path,
+    output_file: str,
     config: dict,
     category_name: str,
     max_number: str,
@@ -104,23 +104,24 @@ def run_main():
     category_name = f"{run_group.replace('-', '_')}_{run_name.replace('-', '_')}"
     folder_path = Path("data") / run_group / run_name
 
+    # print(category_group)
+    # print(run_type_config)
     # Compose output file
-    mode = "load"
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S") if run_mode == mode else None
-    print(timestamp)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S") if run_mode == "load" else None
     output_file = folder_path / format_filename(
         run_type_config["file-name"], category_name, timestamp
     )
 
-    output_file_name = category_name if run_mode != mode else output_file
-    # print(output_file_name)
+    output_file = category_name if run_mode == "upload" else output_file
+    print(output_file)
     # Build and execute script arguments
     script_path = run_type_config["run-script"]
     command_args = build_args(
         run_mode,
         folder_path,
         script_path,
-        output_file_name,
+        output_file,
         category_group,
         category_name,
         max_page_num,
