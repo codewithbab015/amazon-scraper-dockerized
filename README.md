@@ -269,3 +269,96 @@ docker run \
         ├── loaded_amazoncoza_electronics_camera_photo_20250621_141903.csv  
         └── transform_electronics_camera_photo_data.json
 
+---
+
+#### 🚀 Running the Project with Docker (PostgreSQL + pgAdmin)
+
+> Ensure the project has been cloned from the specified GitHub repository before proceeding.
+
+##### 1. Build and Start Services
+
+Use the following command to build the Docker images and start all services in detached mode:
+
+```bash
+docker compose up --build -d
+```
+
+##### 2. Execute the CLI Tool
+
+Once the services are running, execute the CLI scraper with the desired parameters:
+
+```bash
+docker compose run --rm amazon-web-cli \
+  --run_group "electronics" \
+  --run_name "camera-photo" \
+  --run_mode "extract" \
+  --max "1" \
+  --destin "dir"
+```
+
+##### 3. Verify Running Containers
+
+To confirm that the services have started successfully:
+
+```bash
+docker ps
+```
+
+##### 4. Validate Network Configuration
+
+Ensure PostgreSQL and pgAdmin are operating on the same Docker network:
+
+```bash
+docker network ls
+docker network inspect pg-network   # Replace with actual network name if different
+```
+
+##### 5. Persistent Storage
+
+PostgreSQL and the CLI scraper utilize Docker volumes to persist data across container restarts.
+
+Example volume configuration from `docker-compose.yml`:
+
+```yaml
+volumes:
+  - ./data:/app/data
+```
+
+> The local `./data` directory will be created automatically if it does not already exist.
+
+##### 6. Accessing pgAdmin
+
+To access the pgAdmin interface:
+
+* Open a browser and navigate to: [http://localhost:5050](http://localhost:5050)
+* Default login credentials:
+
+  * **Email**: `admin@admin.com`
+  * **Password**: `root123`
+
+##### 7. Connect pgAdmin to PostgreSQL
+
+When adding a new server connection within pgAdmin, use the following configuration:
+
+* **Hostname**: `postgres`
+* **Port**: `5432`
+* **Username**: as defined in `POSTGRES_USER` within `docker-compose.yml`
+* **Password**: as defined in `POSTGRES_PASSWORD` within `docker-compose.yml`
+
+##### 8. Stop and Remove Services
+
+To gracefully stop all running services:
+
+```bash
+docker compose down
+```
+
+##### 9. Clean Up Volumes and Containers (Optional)
+
+> ⚠️ Warning: This action will delete all containers and associated volumes, including any persisted data.
+
+```bash
+docker compose down -v
+```
+
+---
