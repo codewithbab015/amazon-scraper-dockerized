@@ -83,7 +83,7 @@ pipeline {
                             usernameVariable: 'DOCKER_USER',
                             passwordVariable: 'DOCKER_PASS'
                         )]) {
-                            sh '''
+                            sh '''#!/bin/bash
                                 echo "🔐 Logging into Docker Hub..."
                                 echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
                             '''
@@ -93,7 +93,7 @@ pipeline {
                     dockerLoginFunc()
 
                     // Build and push image
-                    sh '''
+                    sh '''#!/bin/bash
                         set -e
                         echo "🐳 Building Docker image..."
                         docker buildx build -t $DOCKER_TAG .
