@@ -1,29 +1,44 @@
----
 version: '3'
 
 tasks:
-  run:
-    desc: Run ETL locally and save cleaned data to the local data folder
+  extract:
+    desc: Extract or Scrape Data
     vars:
-      RUN_GROUP: '{{.RUN_GROUP | default "electronics"}}'
-      RUN_NAME: '{{.RUN_NAME | default "camera-photo"}}'
-      RUN_MODE: '{{.RUN_MODE | default "extract"}}'
       MAX: '{{.MAX | default ""}}'
+    preconditions:
+      - sh: |
+          if [ -z "{{.MAX}}" ]; then
+            echo "Error: --max must be set when RUN_MODE is 'extract'"
+            exit 1
+          fi
+    cmds:
+      - echo "🔍 Starting data extraction..."
+      - python run_script.py --run_group {{.RUN_GROUP}} --run_name {{.RUN_NAME}} --max {{.MAX}} --run_mode "extract"
+
+  transform:
+    desc: Transform Extracted or Scraped Data
+    cmds:
+      - echo "🔄 Starting data transformation..."
+      - python run_script.py --run_group {{.RUN_GROUP}} --run_name {{.RUN_NAME}} --run_mode "transform"
+
+  load:
+    desc: Load Transformed Data into Filesystem or Postgres DB
+    vars:
       DESTINATION: '{{.DESTINATION | default ""}}'
     preconditions:
       - sh: |
-          echo "{{.RUN_MODE}}"
-
-          if [ "{{.RUN_MODE}}" = "extract" ]; then
-            if [ -z "{{.MAX}}" ]; then
-              echo "Error: --max must be set when RUN_MODE is 'extract'"
-              exit 1
-            fi
-          elif [ "{{.RUN_MODE}}" = "load" ]; then
-            if [ -z "{{.DESTINATION}}" ]; then
-              echo "Error: --destin must be set when RUN_MODE is 'load'"
-              exit 1
-            fi
+          if [ -z "{{.DESTINATION}}" ]; then
+            echo "Error: --destination must be set when RUN_MODE is 'load'"
+            exit 1
           fi
     cmds:
-      - python run_script.py --run_group {{.RUN_GROUP}} --run_name {{.RUN_NAME}} --run_mode {{.RUN_MODE}} {{if eq .RUN_MODE "extract"}}--max {{.MAX}}{{end}} {{if eq .RUN_MODE "load"}}--destin {{.DESTINATION}}{{end}}
+      - echo "📤 Loading data to destination..."
+      - python run_script.py --run_group {{.RUN_GROUP}} --run_name {{.RUN_NAME}} --destination {{.DESTINATION}} --run_mode "load"
+
+  run-jobs:
+    desc: Run the Full ETL Pipeline via CLI
+    cmds:
+      - task: extract
+      - task: transform
+      - task: load
+      - echo "✅ All ETL steps completed successfully."

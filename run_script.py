@@ -59,7 +59,7 @@ def build_args(
                 str(output_file),
                 "--transform",
                 str(folder_path / transform_file),
-                "--destin",
+                "--destination",
                 str(destination),
             ]
         case "upload":
@@ -77,7 +77,7 @@ def parse_arguments():
         "--run_mode", help="Stage to run (extract, transform, clean, load)."
     )
     parser.add_argument(
-        "--destin",
+        "--destination",
         help="Directs the destination of the final processed and cleaned data.",
     )
     parser.add_argument("--max", type=int, default=1, help="Maximum page number limit")
@@ -132,7 +132,7 @@ def run_main():
         category_group,
         category_name,
         max_page_num,
-        args.destin,
+        args.destination,
     )
 
     print(f"Running script with args: {command_args}")

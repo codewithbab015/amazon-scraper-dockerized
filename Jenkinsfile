@@ -2,104 +2,68 @@ pipeline {
     agent any
 
     environment {
-        GIT_URL = 'https://github.com/baloyi015/amazon-scraper-vi.git'
+        // Authentication and Git source
+        GIT_URL = 'https://github.com/baloyi015/amazon-scraper-cli.git'
         GIT_CREDENTIALS_ID = 'github_token_id'
+        DOCKERHUB_CREDENTIALS_ID = 'docker_token_id'
+
+        // Python env and cache files
         PIP_CACHE_DIR = "${WORKSPACE}/.pip_cache"
         VENV_DIR = "${WORKSPACE}/.venv"
-        RUN_NAME = "pet-dry-food"
-        RUN_MODE = "detail"
-        DOCKERHUB_CREDENTIALS_ID = 'docker_token_id'
+
+        // Taskfile arguments
+        RUN_GROUP = "electronics"
+        RUN_NAME = "camera-photo"
+        MAX_PAGE = "1"
+        DESTINATION = "dir"
+        LIMIT_RECORDS = "2"
     }
 
     stages {
-        stage('Initialize SCM') {
+        stage('Clone Source-Code') {
             steps {
-                checkout scmGit(
+                echo '📥 Cloning source code from Git...'
+                checkout([
+                    $class: 'GitSCM',
                     branches: [[name: '*/main']],
+                    doGenerateSubmoduleConfigurations: false,
                     extensions: [],
+                    submoduleCfg: [],
                     userRemoteConfigs: [[
                         credentialsId: "${env.GIT_CREDENTIALS_ID}",
                         url: "${env.GIT_URL}"
                     ]]
-                )
+                ])
+                echo '✅ Repository successfully cloned.'
             }
         }
 
-        stage('Setup Python Environment') {
+        stage('Python Env-Setup') {
             steps {
                 sh '''
-                    #!/bin/bash
+                    echo "🔧 Setting up Python virtual environment..."
                     set -e
                     chmod +x activate_venv_ci.sh
                     ./activate_venv_ci.sh
+                    echo "✅ Python environment setup complete."
                 '''
             }
         }
 
-        stage('Login to DockerHub') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: "${env.DOCKERHUB_CREDENTIALS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh '''
-                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                    '''
-                }
-            }
-        }
-
-        stage('Pull Docker Image') {
+        stage('Test') {
             steps {
                 sh '''
-                    #!/bin/bash
-                    set -e
-                    docker pull mrbaloyin/etl-amazon-scraper-v1:latest
-                    docker images
-                '''
-            }
-        }
+                    echo "📄 Viewing Taskfile jobs..."
+                    source "$VENV_DIR/bin/activate"
 
-        stage('Run Mode: Main') {
-            when {
-                expression { env.RUN_MODE == 'main' } 
-            }
-            steps {
-                sh '''
-                    #!/bin/bash
-                    set -e
-                    mkdir -p data
-                    docker run -v "${PWD}/data":/app/data/ mrbaloyin/etl-amazon-scraper-v1:latest \
-                        --run_name "${RUN_NAME}" \
-                        --run_mode "${RUN_MODE}"
-                '''
-            }
-        }
+                    task default
 
-
-        stage('Run Mode: Detail'){
-            when {
-                expression { env.RUN_MODE == 'detail' } 
-            }
-            steps {
-                sh '''
-                    #!/bin/bash
-                    set -e
-                    mkdir -p data
-                    docker run -v "${PWD}/data":/app/data/ mrbaloyin/etl-amazon-scraper-v1:latest \
-                        --run_name "${RUN_NAME}" \
-                        --run_mode "${RUN_MODE}"
-                '''
-            }
-        }
-
-
-
-        stage('Completed') {
-            steps {
-                echo 'All stages completed successfully.'
-                echo 'You can now access the results in the workspace.'
-                sh '''
-                    #!/bin/bash
-                    set -e
-                    ls -lh
+                    echo "🧪 Starting ETL test runs..."
+                    task run-jobs \
+                        MAX=$MAX_PAGE \
+                        DESTINATION=$DESTINATION \
+                        RUN_GROUP=$RUN_GROUP \
+                        RUN_NAME=$RUN_NAME
                 '''
             }
         }
@@ -107,60 +71,41 @@ pipeline {
 
     post {
         always {
-            echo 'Archiving pip cache directory for reuse...'
+            echo '📦 Archiving pip cache directory for reuse...'
             archiveArtifacts artifacts: '.pip_cache/**', fingerprint: true
         }
     }
 }
 
-        // stage('Run Mode: Detail') {
-        //     when {
-        //         expression { env.RUN_MODE == 'detail' } 
-        //     }
 
-        //     steps {
-        //         sh '''#!/bin/bash
-        //             set -e
-        //             source "$VENV_DIR/bin/activate"
-        //             python3 run_script.py \
-        //                 --run_name "$RUN_NAME" \
-        //                 --run_type "detail"
-        //         '''
-        //     }
-        // }
+    //     stage('DockerHub Login & Image Pull') {
+    //         steps {
+    //             withCredentials([usernamePassword(credentialsId: 
+    //             "${env.DOCKERHUB_CREDENTIALS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+    //                 sh '''
+    //                     echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+    //                 '''
+    //             }
 
-        // stage('Run Mode: Clean') {
-        //      when {
-        //         expression { env.RUN_MODE == 'clean' } 
-        //     }
-            
-        //     steps {
-        //         sh '''#!/bin/bash
-        //             set -e
-        //             source "$VENV_DIR/bin/activate"
-        //             python3 run_script.py \
-        //                 --run_name "$RUN_NAME" \
-        //                 --run_type "clean"
-        //         '''
-        //     }
-        // }
+    //             sh '''
+    //                 #!/bin/bash
+    //                 set -e
+    //                 docker pull mrbaloyin/etl-amazon-scraper-cli:latest
+    //                 docker images
+    //                 docker ps
+    //             '''
+    //         }
+    //     }
 
-        // stage('Data Modeler Runner') {
-        //     steps {
-        //         sh '''#!/bin/bash
-        //             set -e
-        //             source "$VENV_DIR/bin/activate"
-        //             python3 data_moder.py
-        //         '''
-        //     }
-        // }
-
-        // stage('Data Processor Runner') {
-        //     steps {
-        //         sh '''#!/bin/bash
-        //             set -e
-        //             source "$VENV_DIR/bin/activate"
-        //             python3 data_processor.py
-        //         '''
-        //     }
-        // }
+    //     stage('Deploy Docker Img') {
+    //         steps {
+    //             echo 'All stages completed successfully.'
+    //             echo 'You can now access the results in the workspace.'
+    //             sh '''
+    //                 #!/bin/bash
+    //                 set -e
+    //                 ls -lh
+    //             '''
+    //         }
+    //     }
+    // }

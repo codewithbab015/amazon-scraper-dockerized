@@ -8,7 +8,7 @@ if __name__ == "__main__":
     # CLI: Arguments
     parser = ArgumentParser()
     parser.add_argument(
-        "--destin",
+        "--destination",
         required=True,
         help="Directs the destination of the final processed and cleaned data.",
     )
@@ -22,9 +22,9 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    if args.destin == "dir":
+    if args.destination == "dir":
         run_filesys(args)
-    elif args.destin == "db":
+    elif args.destination == "db":
         run_loader_db(args)
     else:
         print(

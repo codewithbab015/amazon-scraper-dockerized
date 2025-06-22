@@ -222,7 +222,7 @@ def process_product_detail(products: list, category: str, subcategory: str) -> l
     return detailed_product_list
 
 
-def run_transformer():
+def run_transformer(limit_records: int):
 
     logger.info("Starting detail extraction script...")
 
@@ -244,7 +244,7 @@ def run_transformer():
         browser = p.firefox.launch(headless=True)
         page = browser.new_page()
 
-        for idx, product in enumerate(products_[:4], 1):
+        for idx, product in enumerate(products_[:limit_records], 1):
             try:
                 details = extract_product_details(page, product, category, subcategory)
                 detailed_products.append(details)
@@ -259,7 +259,8 @@ def run_transformer():
 
 
 if __name__ == "__main__":
-    run_transformer()
+
+    run_transformer(5)
 
     # try:
     #     for index in range(12):

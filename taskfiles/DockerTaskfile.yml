@@ -57,12 +57,6 @@ tasks:
 
   run-job:
     desc: Run ETL using Docker container
-    vars:
-      RUN_GROUP: '{{.RUN_GROUP | default "electronics"}}'
-      RUN_NAME: '{{.RUN_NAME | default "camera-photo"}}'
-      RUN_MODE: '{{.RUN_MODE | default "extract"}}'
-      MAX: '{{.MAX | default ""}}'
-      DESTINATION: '{{.DESTINATION | default ""}}'
     preconditions:
       - sh: |
           echo "{{.RUN_MODE}}"

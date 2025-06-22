@@ -1,6 +1,10 @@
 ---
 version: '3'
-
+vars:
+  RUN_GROUP: '{{.RUN_GROUP | default "electronics"}}'
+  RUN_NAME: '{{.RUN_NAME | default "camera-photo"}}'
+  RUN_MODE: '{{.RUN_MODE | default "extract"}}'
+ 
 includes:
   cli-runner: ./taskfiles/RunCLI.yml
   docker: ./taskfiles/DockerTaskfile.yml
