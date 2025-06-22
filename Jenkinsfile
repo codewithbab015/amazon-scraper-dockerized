@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         // Authentication and Git source
-        GIT_URL = 'https://github.com/baloyi015/amazon-scraper-dockerized.git'
+        GIT_URL = 'https://github.com/codewithbab015/amazon-scraper-dockerized.git'
         GIT_CREDENTIALS_ID = 'github_token_id'
         DOCKERHUB_CREDENTIALS_ID = 'docker_token_id'
 
@@ -24,7 +24,7 @@ pipeline {
         stage('Clone Source-Code') {
             steps {
                 echo '📥 Cloning source code from Git...'
-                
+
                 checkout scmGit(
                     branches: [[name: '*/main']],
                     extensions: [],
