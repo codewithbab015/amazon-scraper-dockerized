@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pvc-debugger
+  namespace: ns-scraper
+spec:
+  containers:
+  - name: debugger
+    image: busybox
+    imagePullPolicy: IfNotPresent
+    command: ["sleep", "3600"]
+    volumeMounts:
+    - name: scraper-output-volume
+      mountPath: /app/data
+  volumes:
+  - name: scraper-output-volume
+    persistentVolumeClaim:
+      claimName: scraper-pvc
+  restartPolicy: Never

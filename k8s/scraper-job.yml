@@ -1,0 +1,28 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: scraper-runner
+  namespace: ns-scraper
+spec:
+  backoffLimit: 4
+  template:
+    spec:
+      containers:
+        - name: amazon-web-cli
+          image: mrbaloyin/amazon-web-scraper-cli:latest
+          command: ['python3', 'run_script.py']
+          args:  [
+              '--run_group', 'electronics',
+              '--run_name', 'camera-photo', 
+              '--run_mode', 'extract',
+              '--max', '1'
+          ]
+          volumeMounts: 
+            - name: scraper-output-volume
+              mountPath: /app/data
+          imagePullPolicy: IfNotPresent
+      volumes:
+        - name: scraper-output-volume
+          persistentVolumeClaim:
+            claimName: scraper-pvc
+      restartPolicy: Never
