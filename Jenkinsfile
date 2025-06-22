@@ -60,7 +60,7 @@ pipeline {
                     task default
 
                     echo "🧪 Starting ETL test runs..."
-                    task run-jobs \
+                    task cli-runner:run-jobs \
                         MAX=$MAX_PAGE \
                         DESTINATION=$DESTINATION \
                         RUN_GROUP=$RUN_GROUP \
