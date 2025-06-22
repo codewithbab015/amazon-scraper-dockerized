@@ -52,7 +52,8 @@ pipeline {
 
         stage('Test') {
             steps {
-                sh '''
+                sh '''#!/bin/bash
+                    set -e
                     echo "📄 Viewing Taskfile jobs..."
                     source "$VENV_DIR/bin/activate"
 
