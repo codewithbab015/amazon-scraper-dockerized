@@ -20,20 +20,20 @@ pipeline {
     }
 
     stages {
+
         stage('Clone Source-Code') {
             steps {
                 echo '📥 Cloning source code from Git...'
-                checkout([
-                    $class: 'GitSCM',
+                
+                checkout scmGit(
                     branches: [[name: '*/main']],
-                    doGenerateSubmoduleConfigurations: false,
                     extensions: [],
-                    submoduleCfg: [],
                     userRemoteConfigs: [[
                         credentialsId: "${env.GIT_CREDENTIALS_ID}",
                         url: "${env.GIT_URL}"
                     ]]
-                ])
+                )
+               
                 echo '✅ Repository successfully cloned.'
             }
         }
