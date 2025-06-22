@@ -12,3 +12,4 @@ __pycache__
 docs/
 site/
 *.txt
+git_control_flow.sh

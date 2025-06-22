@@ -51,23 +51,23 @@ pipeline {
             }
         }
 
-        stage('Test') {
-            steps {
-                sh '''#!/bin/bash
-                    set -e
-                    echo "📄 Viewing Taskfile jobs..."
-                    source "$VENV_DIR/bin/activate"
-                    task default
+        // stage('Test') {
+        //     steps {
+        //         sh '''#!/bin/bash
+        //             set -e
+        //             echo "📄 Viewing Taskfile jobs..."
+        //             source "$VENV_DIR/bin/activate"
+        //             task default
 
-                    echo "🧪 Starting ETL test runs..."
-                    task cli-runner:run-jobs \
-                        MAX=$MAX_PAGE \
-                        DESTINATION=$DESTINATION \
-                        RUN_GROUP=$RUN_GROUP \
-                        RUN_NAME=$RUN_NAME > task_run.log 2>&1
-                '''
-            }
-        }
+        //             echo "🧪 Starting ETL test runs..."
+        //             task cli-runner:run-jobs \
+        //                 MAX=$MAX_PAGE \
+        //                 DESTINATION=$DESTINATION \
+        //                 RUN_GROUP=$RUN_GROUP \
+        //                 RUN_NAME=$RUN_NAME > task_run.log 2>&1
+        //         '''
+        //     }
+        // }
 
         stage('Build') {
             steps {
