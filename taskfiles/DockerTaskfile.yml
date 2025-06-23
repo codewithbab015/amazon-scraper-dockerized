@@ -19,10 +19,12 @@ tasks:
 
   local-build:
     desc: Build Docker image locally and load into Docker daemon
+    vars:
+      DOCKER_TAG: '{{.DOCKER_TAG}}'
     deps:
       - docker-login
     cmds:
-      - docker buildx build --load -t {{.TAG}} .
+      - docker buildx build --load -t {{.DOCKER_TAG}} .
 
   remote-build:
     desc: Build and push Docker image to Docker Hub
