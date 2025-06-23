@@ -29,7 +29,6 @@ pipeline {
                 echo '📥 Cloning source code from Git...'
                 checkout scmGit(
                     branches: [[name: '*/main']],
-                    extensions: [],
                     userRemoteConfigs: [[
                         credentialsId: "${env.GIT_CREDENTIALS_ID}",
                         url: "${env.GIT_URL}"
@@ -54,31 +53,24 @@ pipeline {
         stage('Build') {
             steps {
                 script {
-                    // Set Git SHA and final image tag
                     def gitSha = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
                     env.DOCKER_TAG = "${env.DOCKER_USER}/${env.DOCKER_IMG}:${gitSha}"
 
-                    // Docker Hub login
-                    def dockerLoginFunc = {
-                        withCredentials([usernamePassword(
-                            credentialsId: env.DOCKERHUB_CREDENTIALS_ID,
-                            usernameVariable: 'DOCKER_USER',
-                            passwordVariable: 'DOCKER_PASS'
-                        )]) {
-                            sh '''#!/bin/bash
-                                echo "🔐 Logging into Docker Hub..."
-                                echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                            '''
-                        }
+                    withCredentials([usernamePassword(
+                        credentialsId: env.DOCKERHUB_CREDENTIALS_ID,
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                    )]) {
+                        sh '''
+                            echo "🔐 Logging into Docker Hub..."
+                            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        '''
                     }
 
-                    dockerLoginFunc()
-
-                    // Build and push image
-                    sh '''#!/bin/bash
+                    sh '''
                         set -e
                         source "$VENV_DIR/bin/activate"
-                        echo "🐳 Building Docker image using taskfile..."
+                        echo "🐳 Building Docker image using Taskfile..."
                         task docker:local-build DOCKER_TAG=$DOCKER_TAG
                         docker images
                     '''
@@ -88,12 +80,10 @@ pipeline {
 
         stage('Test') {
             steps {
-                sh '''#!/bin/bash
+                sh '''
                     set -e
-                    echo "📄 Viewing Taskfile jobs..."
                     source "$VENV_DIR/bin/activate"
                     task default
-
                     echo "🧪 Starting ETL test runs..."
                     task docker:run-jobs \
                         DOCKER_TAG=$DOCKER_TAG \
@@ -106,20 +96,19 @@ pipeline {
             }
         }
 
-        // stage('Deploy') {
-        //     steps {
-        //         sh '''#!/bin/bash
-        //             set -e
-        //             echo "Initialized deployment ..."
-        //             echo "📤 Pushing Docker image to Docker Hub..."
-        //             docker push $DOCKER_TAG
+        stage('Deploy') {
+            steps {
+                sh '''
+                    set -e
+                    echo "📤 Pushing Docker image to Docker Hub..."
+                    docker push $DOCKER_TAG
 
-        //             echo "🆕 Also tagging as 'latest'..."
-        //             docker tag $DOCKER_TAG $DOCKER_USER/$DOCKER_IMG:latest
-        //             docker push $DOCKER_USER/$DOCKER_IMG:latest
-        //         '''
-        //     }
-        // }
+                    echo "🆕 Tagging as 'latest'..."
+                    docker tag $DOCKER_TAG $DOCKER_USER/$DOCKER_IMG:latest
+                    docker push $DOCKER_USER/$DOCKER_IMG:latest
+                '''
+            }
+        }
     }
 
     post {
