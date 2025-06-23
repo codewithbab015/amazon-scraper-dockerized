@@ -40,7 +40,7 @@ pipeline {
 
         stage('Python Env-Setup') {
             steps {
-                sh '''
+                sh '''#!/bin/bash
                     echo "🔧 Setting up Python virtual environment..."
                     set -e
                     chmod +x activate_venv_ci.sh
@@ -61,13 +61,13 @@ pipeline {
                         usernameVariable: 'DOCKER_USER',
                         passwordVariable: 'DOCKER_PASS'
                     )]) {
-                        sh '''
+                        sh '''#!/bin/bash
                             echo "🔐 Logging into Docker Hub..."
                             echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
                         '''
                     }
 
-                    sh '''
+                    sh '''#!/bin/bash
                         set -e
                         source "$VENV_DIR/bin/activate"
                         echo "🐳 Building Docker image using Taskfile..."
@@ -80,7 +80,7 @@ pipeline {
 
         stage('Test') {
             steps {
-                sh '''
+                sh '''#!/bin/bash
                     set -e
                     source "$VENV_DIR/bin/activate"
                     task default
@@ -98,7 +98,7 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                sh '''
+                sh '''#!/bin/bash
                     set -e
                     echo "📤 Pushing Docker image to Docker Hub..."
                     docker push $DOCKER_TAG
