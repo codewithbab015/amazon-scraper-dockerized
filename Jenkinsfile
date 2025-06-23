@@ -96,7 +96,7 @@ pipeline {
                     sh '''#!/bin/bash
                         set -e
                         echo "🐳 Building Docker image using taskfile..."
-                        task docker:local-build TAG=$DOCKER_TAG
+                        task docker:local-build DOCKER_TAG=$DOCKER_TAG
                         docker images
                     '''
                 }
