@@ -95,19 +95,46 @@ pipeline {
                     // Build and push image
                     sh '''#!/bin/bash
                         set -e
-                        echo "🐳 Building Docker image..."
-                        docker buildx build -t $DOCKER_TAG .
-
-                        echo "📤 Pushing Docker image to Docker Hub..."
-                        docker push $DOCKER_TAG
-
-                        echo "🆕 Also tagging as 'latest'..."
-                        docker tag $DOCKER_TAG $DOCKER_USER/$DOCKER_IMG:latest
-                        docker push $DOCKER_USER/$DOCKER_IMG:latest
+                        echo "🐳 Building Docker image using taskfile..."
+                        task docker:local-build TAG=$DOCKER_TAG
+                        docker images
                     '''
                 }
             }
         }
+
+        // stage('Test') {
+        //     steps {
+        //         sh '''#!/bin/bash
+        //             set -e
+        //             echo "📄 Viewing Taskfile jobs..."
+        //             source "$VENV_DIR/bin/activate"
+        //             task default
+
+        //             echo "🧪 Starting ETL test runs..."
+        //             task cli-runner:run-jobs \
+        //                 MAX=$MAX_PAGE \
+        //                 DESTINATION=$DESTINATION \
+        //                 RUN_GROUP=$RUN_GROUP \
+        //                 RUN_NAME=$RUN_NAME > task_run.log 2>&1
+        //         '''
+        //     }
+        // }
+
+        // stage('Deploy') {
+        //     steps {
+        //         sh '''#!/bin/bash
+        //             set -e
+        //             echo "Initialized deployment ..."
+        //             echo "📤 Pushing Docker image to Docker Hub..."
+        //             docker push $DOCKER_TAG
+
+        //             echo "🆕 Also tagging as 'latest'..."
+        //             docker tag $DOCKER_TAG $DOCKER_USER/$DOCKER_IMG:latest
+        //             docker push $DOCKER_USER/$DOCKER_IMG:latest
+        //         '''
+        //     }
+        // }
     }
 
     post {
