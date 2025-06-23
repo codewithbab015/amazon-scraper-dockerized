@@ -46,8 +46,12 @@ pipeline {
                     set -e
                     chmod +x activate_venv_ci.sh
                     ./activate_venv_ci.sh
-                    echo "✅ Python environment setup complete."
+                    if ! command -v task &> /dev/null; then
+                        echo "Installing task CLI..."
+                        sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin
+                    fi
                     task --version
+                    echo "✅ Python environment setup complete."
                 '''
             }
         }
