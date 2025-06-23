@@ -47,6 +47,7 @@ pipeline {
                     chmod +x activate_venv_ci.sh
                     ./activate_venv_ci.sh
                     echo "✅ Python environment setup complete."
+                    task --version
                 '''
             }
         }
