@@ -46,11 +46,6 @@ pipeline {
                     set -e
                     chmod +x activate_venv_ci.sh
                     ./activate_venv_ci.sh
-                    if ! command -v task &> /dev/null; then
-                        echo "Installing task CLI..."
-                        sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin
-                    fi
-                    task --version
                     echo "✅ Python environment setup complete."
                 '''
             }
@@ -100,6 +95,7 @@ pipeline {
                     // Build and push image
                     sh '''#!/bin/bash
                         set -e
+                        source "$VENV_DIR/bin/activate"
                         echo "🐳 Building Docker image using taskfile..."
                         task docker:local-build DOCKER_TAG=$DOCKER_TAG
                         docker images
